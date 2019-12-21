@@ -1,0 +1,75 @@
+{% extends 'lab/base.html' %}
+
+{% load static %}
+
+{% block content %}
+<div id="colorlib-main">
+
+	<div class="colorlib-contact">
+		<div class="container-fluid">
+			<!-- <div class="row"> -->
+				<div class="col-sm-12">
+					<h2 class="colorlib-heading animate-box" data-animate-effect="fadeInLeft">Similar Word<br>{{ term }}</h2>
+				</div>
+			<!-- </div> -->
+			<!-- <div class="row"> -->
+				<div class="col-sm-3 col-sm-push-9">
+					<h4>Sample words of list</h4>
+					{% for word in sample_words %}
+						<li>{{ word }}</li>
+					{% endfor %}
+					<br>
+				</div>
+				<div class="col-sm-9 col-sm-pull-3">
+					<div class="row">
+						<div class="col-sm-12 col-sm-offset-1 col-sm-pull-1 animate-box" data-animate-effect="fadeInLeft">
+							<form action={{ version_url }} method="post">{% csrf_token %}
+								<div class="form-group">
+									<input type="text" class="form-control" placeholder="Search Word" name="search_word">
+									<input type="radio" name="duplicate" value="remain" checked>중복 유지
+									<input type="radio" name="duplicate" value="remove">중복 제거
+								</div>
+								<div class="form-group">
+									<input type="submit" class="btn btn-primary btn-send-message" value="Search">
+								</div>
+							</form>
+							<h4>검색어 : {{ keyword }}</h4>
+							
+							<div class="col-sm-6">
+								<ol>
+									<h4>[ 이전 정부 ]</h4>
+									<p>{{ error_message_0 }}</p>
+									<p>{{ word_count_0 }}</p>
+									{% for result in result_list_0 %}
+										<li>{{ result }}</li>
+									{% endfor %}
+								</ol>
+							</div>
+							<div class="col-sm-6">
+								<ol>
+									<h4>[ 현재 정부 ]</h4>
+									<p>{{ error_message_1 }}</p>
+									<p>{{ word_count_1 }}</p>
+									{% for result in result_list_1 %}
+										<li>{{ result }}</li>
+									{% endfor %}
+								</ol>
+							</div>
+						</div>
+						
+					</div>
+				</div>
+			<!-- </div> -->
+		</div>
+	</div>
+
+	<!-- Google Map -->
+	<!-- <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1581.6057930025916!2d126.92350995831579!3d37.55007849495029!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357c9971f44aa705%3A0x84e27c4b9c9ebbf2!2z7ZmN7J2164yA7ZWZ6rWQIOygnDTqs7XtlZnqtIA!5e0!3m2!1sko!2skr!4v1573473496812!5m2!1sko!2skr" width="600" height="450" frameborder="0" style="border:0;" allowfullscreen=""></iframe> -->
+<!-- 
+	<div id="map"></div>	
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCefOgb1ZWqYtj7raVSmN4PL2WkTrc-KyA&sensor=false"></script>
+	<script src="{% static 'js/google_map.js' %}"></script>
+ -->
+</div>
+
+{% endblock %}
