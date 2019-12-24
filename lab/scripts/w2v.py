@@ -16,9 +16,8 @@ import re
 
 
 # static variables
-# DATA_DIR = '/home/sehan/project/django_site/lab/scripts/data/'
-DATA_DIR = '/django_site/lab/scripts/data/'
-TERM_COUNT = 2
+DATA_DIR = '/searchpert-w2v/lab/scripts/data/'
+TERM_COUNT = 4
 
 # 보안을 위해 DB서버 정보를 따로 보관
 with open(DATA_DIR + 'connection.txt', 'r') as file:
@@ -51,10 +50,10 @@ class Searchpert_w2v:
         self.term_words = []  # 기간에 따른 word list
 
         # self.load_sentences_from_db()
-        # self.load_sentences_from_file()
-        # self.build_model()
+        self.load_sentences_from_file()
+        self.build_model()
 
-        self.load_model()
+        #self.load_model()
 
 
     def load_sentences_from_db(self):
@@ -77,23 +76,26 @@ class Searchpert_w2v:
         db = client[MONGO_DB]
         collection = db[MONGO_COLLECTION]
 
-        # 기준에 따라 나눈 날짜
+        # 기준에 따라 나눈 날짜 (16대 노무현, 17대 이명박, 18대 박근혜, 19대 문재인)
         from_date = [
+            datetime.datetime(2003, 3, 1),
+            datetime.datetime(2008, 3, 1),
             datetime.datetime(2013, 3, 1),
             datetime.datetime(2017, 5, 1)
             ]
         to_date = [
+            datetime.datetime(2005, 8, 31, 23, 59, 59, 000000),
+            datetime.datetime(2010, 8, 31, 23, 59, 59, 000000),
             datetime.datetime(2015, 8, 31, 23, 59, 59, 000000),
             datetime.datetime(2019, 10, 31, 23, 59, 59, 000000)
             ]
-
         
         for i in range(TERM_COUNT):
 
             # 기간에 해당하는 data만 읽기 (+ 테스트를 위해 limit 추가)
             cursor = collection.find(
-                {"date": {'$gte': from_date[i], '$lt': to_date[i]}},
-                limit=QUERY_LIMIT
+                {"date": {'$gte': from_date[i], '$lt': to_date[i]}}
+                ,limit=QUERY_LIMIT
                 )
 
             # DB에서 cursor로 data 읽기
@@ -215,7 +217,7 @@ class Searchpert_w2v:
 
             tmp_sentences = self.term_sentences[i]  # reversed list
             random.shuffle(tmp_sentences)  # randomly shuffled list
-            model = Word2Vec(sentences=tmp_sentences, size=150, window=5, min_count=3, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
+            model = Word2Vec(sentences=tmp_sentences, size=300, window=5, min_count=3, workers=40, iter=100, compute_loss=True, callbacks=[callback()])
             model.save(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
             self.term_models[i]['shuffle'] = model
 
