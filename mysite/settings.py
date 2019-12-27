@@ -26,7 +26,7 @@ SECRET_KEY = '_dor#3ff@k=#$d$r8d(ci9(tmuevl$#7b6^@#8+mo-86m7exz$'
 DEBUG = True
 # DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['searchpertai.ddns.net', '220.85.83.64']
 
 
 # Application definition
@@ -121,5 +121,3 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'sehan.ml', 'www.sehan.ml', '223.194.69.89']
