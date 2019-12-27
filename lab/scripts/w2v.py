@@ -50,10 +50,12 @@ class Searchpert_w2v:
         self.term_words = []  # 기간에 따른 word list
 
         # self.load_sentences_from_db()
-        self.load_sentences_from_file()
-        self.build_model()
+        # self.load_sentences_from_file()
+        # self.build_model()
 
-        #self.load_model()
+        self.load_model()
+
+        self.TERM_COUNT = 4
 
 
     def load_sentences_from_db(self):
@@ -176,18 +178,18 @@ class Searchpert_w2v:
         for i in range(TERM_COUNT):
             self.term_models.append({})
 
-            model = Word2Vec.load(DATA_DIR + 'original_wv_' + str(i) + '.model')
-            self.term_models[i]['origin'] = model
+            # model = Word2Vec.load(DATA_DIR + 'original_wv_' + str(i) + '.model')
+            # self.term_models[i]['origin'] = model
+            
+            # model = Word2Vec.load(DATA_DIR + 'reversed_wv_' + str(i) + '.model')
+            # self.term_models[i]['reverse'] = model
+            model = Word2Vec.load(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
+            self.term_models[i]['shuffle'] = model
             
             w2c = dict()
             for item in model.wv.vocab:
                 w2c[item]=model.wv.vocab[item].count
             self.term_words.append(dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True)))
-            
-            model = Word2Vec.load(DATA_DIR + 'reversed_wv_' + str(i) + '.model')
-            self.term_models[i]['reverse'] = model
-            model = Word2Vec.load(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
-            self.term_models[i]['shuffle'] = model
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -215,9 +217,9 @@ class Searchpert_w2v:
             # model.save(DATA_DIR + 'reversed_wv_' + str(i) + '.model')
             # self.term_models[i]['reverse'] = model
 
-            tmp_sentences = self.term_sentences[i]  # reversed list
+            tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
-            model = Word2Vec(sentences=tmp_sentences, size=300, window=5, min_count=3, workers=40, iter=100, compute_loss=True, callbacks=[callback()])
+            model = Word2Vec(sentences=tmp_sentences, size=300, window=5, min_count=8, workers=40, iter=100, compute_loss=True, callbacks=[callback()])
             model.save(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
             self.term_models[i]['shuffle'] = model
 
