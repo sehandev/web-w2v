@@ -11,4 +11,5 @@ urlpatterns = [
     # path('searchpert_origin', views.searchpert_origin, name='searchpert_origin'),
     # path('searchpert_reverse', views.searchpert_reverse, name='searchpert_reverse'),
     path('searchpert_shuffle', views.searchpert_shuffle, name='searchpert_shuffle'),
+    path('w2v', views.searchpert_shuffle, name='w2v'),
 ]
