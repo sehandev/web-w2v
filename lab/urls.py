@@ -2,14 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('index', views.index, name='index'),
-    path('member', views.member, name='member'),
-    path('member_single', views.member_single, name='member_single'),
-    path('blog', views.blog, name='blog'),
-    path('contact', views.contact, name='contact'),
-    # path('searchpert_origin', views.searchpert_origin, name='searchpert_origin'),
-    # path('searchpert_reverse', views.searchpert_reverse, name='searchpert_reverse'),
-    path('searchpert_shuffle', views.searchpert_shuffle, name='searchpert_shuffle'),
-    path('w2v', views.searchpert_shuffle, name='w2v'),
+    path('', views.w2v_2, name='index'),
+    path('w2v', views.w2v_2, name='w2v'),
+    path('w2v_1', views.w2v_1, name='w2v_1'),
+    path('w2v_2', views.w2v_2, name='w2v_2'),
 ]

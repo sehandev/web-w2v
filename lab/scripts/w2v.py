@@ -6,6 +6,7 @@ import pymongo
 from gensim.test.utils import common_texts, get_tmpfile
 from gensim.models.callbacks import CallbackAny2Vec
 from gensim.models.word2vec import Word2Vec
+from gensim.scripts.word2vec2tensor import word2vec2tensor
 from gensim import utils
 from konlpy.tag import Mecab
 
@@ -44,6 +45,8 @@ class callback(CallbackAny2Vec):
 
 class Searchpert_w2v:
     def __init__(self):
+        self.TERM_COUNT = 4
+
         self.mecab = Mecab()
         self.term_sentences = []  # 기간에 따른 data list
         self.term_models = []  # 기간에 따른 mecab model list
@@ -55,7 +58,7 @@ class Searchpert_w2v:
 
         self.load_model()
 
-        self.TERM_COUNT = 4
+        self.vector_to_tsv()
 
 
     def load_sentences_from_db(self):
@@ -190,6 +193,8 @@ class Searchpert_w2v:
             for item in model.wv.vocab:
                 w2c[item]=model.wv.vocab[item].count
             self.term_words.append(dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True)))
+            
+            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.wv', binary=True)  # word2vec2tensor를 위한 저장
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -219,8 +224,9 @@ class Searchpert_w2v:
 
             tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
-            model = Word2Vec(sentences=tmp_sentences, size=300, window=5, min_count=8, workers=40, iter=100, compute_loss=True, callbacks=[callback()])
-            model.save(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
+            model = Word2Vec(sentences=tmp_sentences, size=256, window=5, min_count=10, workers=2, iter=50, compute_loss=True, callbacks=[callback()])
+            model.save(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')  # model 저장
+            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.wv')  # word2vec2tensor를 위한 저장
             self.term_models[i]['shuffle'] = model
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
@@ -229,6 +235,14 @@ class Searchpert_w2v:
 
         finish_time = int(time.time() - start_time)
         print("{}:{}".format(finish_time // 60, finish_time % 60))
+
+
+    def vector_to_tsv(self):
+        for i in range(TERM_COUNT):
+            model_path = DATA_DIR + 'wv_format_' + str(i) + '.wv'
+            tensor_tsv_name = DATA_DIR + 'wv_' + str(i)
+            word2vec2tensor(model_path, tensor_tsv_name, binary=True)
+            print('--------------' + str(i))
 
 
     def most_similar(self, search_word, term=1, topn=10, version='origin'):
