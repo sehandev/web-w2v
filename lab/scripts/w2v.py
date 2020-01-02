@@ -52,13 +52,13 @@ class Searchpert_w2v:
         self.term_models = []  # 기간에 따른 mecab model list
         self.term_words = []  # 기간에 따른 word list
 
-        # self.load_sentences_from_db()
+        self.load_sentences_from_db()
         # self.load_sentences_from_file()
-        # self.build_model()
+        self.build_model()
 
-        self.load_model()
+        # self.load_model()
 
-        self.vector_to_tsv()
+        # self.vector_to_tsv()
 
 
     def load_sentences_from_db(self):
@@ -100,7 +100,7 @@ class Searchpert_w2v:
             # 기간에 해당하는 data만 읽기 (+ 테스트를 위해 limit 추가)
             cursor = collection.find(
                 {"date": {'$gte': from_date[i], '$lt': to_date[i]}}
-                ,limit=QUERY_LIMIT
+                # ,limit=QUERY_LIMIT
                 )
 
             # DB에서 cursor로 data 읽기
@@ -179,15 +179,8 @@ class Searchpert_w2v:
         print('\nStart : word2vec model')
 
         for i in range(TERM_COUNT):
-            self.term_models.append({})
-
-            # model = Word2Vec.load(DATA_DIR + 'original_wv_' + str(i) + '.model')
-            # self.term_models[i]['origin'] = model
-            
-            # model = Word2Vec.load(DATA_DIR + 'reversed_wv_' + str(i) + '.model')
-            # self.term_models[i]['reverse'] = model
-            model = Word2Vec.load(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')
-            self.term_models[i]['shuffle'] = model
+            model = Word2Vec.load(DATA_DIR + 'wv_' + str(i) + '.model')
+            self.term_models[i].append(model)
             
             w2c = dict()
             for item in model.wv.vocab:
@@ -211,23 +204,12 @@ class Searchpert_w2v:
         print('\nStart : word2vec model')
 
         for i in range(TERM_COUNT):
-            self.term_models.append({})
-
-            # model = Word2Vec(sentences=self.term_sentences[i], size=150, window=5, min_count=3, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
-            # model.save(DATA_DIR + 'original_wv_' + str(i) + '.model')
-            # self.term_models[i]['origin'] = model
-
-            # tmp_sentences = self.term_sentences[i][::-1]  # reversed list
-            # model = Word2Vec(sentences=tmp_sentences, size=150, window=5, min_count=3, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
-            # model.save(DATA_DIR + 'reversed_wv_' + str(i) + '.model')
-            # self.term_models[i]['reverse'] = model
-
             tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
             model = Word2Vec(sentences=tmp_sentences, size=256, window=5, min_count=10, workers=2, iter=50, compute_loss=True, callbacks=[callback()])
-            model.save(DATA_DIR + 'shuffled_wv_' + str(i) + '.model')  # model 저장
+            model.save(DATA_DIR + 'wv_' + str(i) + '.model')  # model 저장
             model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.wv')  # word2vec2tensor를 위한 저장
-            self.term_models[i]['shuffle'] = model
+            self.term_models[i].append(model)
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -238,14 +220,20 @@ class Searchpert_w2v:
 
 
     def vector_to_tsv(self):
+        start_time = time.time()
+        print('\nStart : w2v to tensor')
+
         for i in range(TERM_COUNT):
             model_path = DATA_DIR + 'wv_format_' + str(i) + '.wv'
             tensor_tsv_name = DATA_DIR + 'wv_' + str(i)
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
-            print('--------------' + str(i))
+            print("Finish : w2v to tensor - {}".format(i))
+
+        finish_time = int(time.time() - start_time)
+        print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
-    def most_similar(self, search_word, term=1, topn=10, version='origin'):
+    def most_similar(self, search_word, term=1, topn=10):
         # search_word와 가장 비슷한 단어 topn개
 
         if search_word == '':
@@ -254,7 +242,7 @@ class Searchpert_w2v:
 
         try:
             # 입력한 단어가 vector로 있으면
-            most_similar_word = self.term_models[term][version].wv.most_similar(search_word, topn=topn)  # 가장 비슷한 단어
+            most_similar_word = self.term_models[term].wv.most_similar(search_word, topn=topn)  # 가장 비슷한 단어
 
             similar_count = []
             for similar_word, _ in most_similar_word:

@@ -13,7 +13,7 @@ def w2v_1(request):
         keyword = request.POST.get('search_word')
                 
         for i in range(searchpert_w2v.TERM_COUNT):
-            similar_list, similar_word_count, word_count = searchpert_w2v.most_similar(keyword, i, 100, 'shuffle')
+            similar_list, similar_word_count, word_count = searchpert_w2v.most_similar(keyword, i, 100)
 
             if similar_list == -1:
                 error_message[i] = '찾는 결과가 없습니다.'
@@ -41,7 +41,7 @@ def w2v_2(request):
         keyword = request.POST.get('search_word')
                 
         for i in range(searchpert_w2v.TERM_COUNT):
-            similar_list, similar_word_count, word_count = searchpert_w2v.most_similar(keyword, i, 100, 'shuffle')
+            similar_list, similar_word_count, word_count = searchpert_w2v.most_similar(keyword, i, 100)
 
             if similar_list == -1:
                 error_message[i] = '찾는 결과가 없습니다.'
