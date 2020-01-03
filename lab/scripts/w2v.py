@@ -18,7 +18,7 @@ import re
 
 # static variables
 DATA_DIR = '/searchpert-w2v/lab/scripts/data/'
-TERM_COUNT = 4
+TERM_COUNT = 2
 
 # 보안을 위해 DB서버 정보를 따로 보관
 with open(DATA_DIR + 'connection.txt', 'r') as file:
@@ -36,29 +36,35 @@ class callback(CallbackAny2Vec):
 
     def __init__(self):
         self.epoch = 1
+        self.start_time = time.time()
 
     def on_epoch_end(self, model):
         loss = model.get_latest_training_loss()
-        print('Loss after epoch {}: {}'.format(self.epoch, loss))
+
+        finish_time = int(time.time() - self.start_time)
+        print('Loss after epoch {}: {}'.format(self.epoch, loss), end='\t')
+        print("{}:{}".format(finish_time // 60, finish_time % 60))
+
         self.epoch += 1
+
 
 
 class Searchpert_w2v:
     def __init__(self):
-        self.TERM_COUNT = 4
+        self.TERM_COUNT = TERM_COUNT
 
         self.mecab = Mecab()
         self.term_sentences = []  # 기간에 따른 data list
         self.term_models = []  # 기간에 따른 mecab model list
         self.term_words = []  # 기간에 따른 word list
 
-        self.load_sentences_from_db()
+        # self.load_sentences_from_db()
         # self.load_sentences_from_file()
-        self.build_model()
+        # self.build_model()
 
         # self.load_model()
 
-        # self.vector_to_tsv()
+        self.vector_to_tsv()
 
 
     def load_sentences_from_db(self):
@@ -180,14 +186,14 @@ class Searchpert_w2v:
 
         for i in range(TERM_COUNT):
             model = Word2Vec.load(DATA_DIR + 'wv_' + str(i) + '.model')
-            self.term_models[i].append(model)
+            self.term_models.append(model)
             
             w2c = dict()
             for item in model.wv.vocab:
                 w2c[item]=model.wv.vocab[item].count
             self.term_words.append(dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True)))
             
-            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.wv', binary=True)  # word2vec2tensor를 위한 저장
+            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.bin', binary=True)  # word2vec2tensor를 위한 저장
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -206,10 +212,10 @@ class Searchpert_w2v:
         for i in range(TERM_COUNT):
             tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
-            model = Word2Vec(sentences=tmp_sentences, size=256, window=5, min_count=10, workers=2, iter=50, compute_loss=True, callbacks=[callback()])
+            model = Word2Vec(sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=30, compute_loss=True, callbacks=[callback()])
             model.save(DATA_DIR + 'wv_' + str(i) + '.model')  # model 저장
-            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.wv')  # word2vec2tensor를 위한 저장
-            self.term_models[i].append(model)
+            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.bin', binary=True)  # word2vec2tensor를 위한 저장
+            self.term_models.append(model)
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -224,13 +230,13 @@ class Searchpert_w2v:
         print('\nStart : w2v to tensor')
 
         for i in range(TERM_COUNT):
-            model_path = DATA_DIR + 'wv_format_' + str(i) + '.wv'
+            model_path = DATA_DIR + 'wv_format_' + str(i) + '.bin'
             tensor_tsv_name = DATA_DIR + 'wv_' + str(i)
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
-            print("Finish : w2v to tensor - {}".format(i))
 
-        finish_time = int(time.time() - start_time)
-        print("{}:{}".format(finish_time // 60, finish_time % 60))
+            print("Finish : w2v to tensor - {}".format(i))
+            finish_time = int(time.time() - start_time)
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
     def most_similar(self, search_word, term=1, topn=10):
