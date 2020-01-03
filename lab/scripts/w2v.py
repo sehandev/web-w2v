@@ -69,7 +69,9 @@ class Searchpert_w2v:
 
     def load_sentences_from_db(self):
         # DB로부터 data 받아와서 전처리 거치기 (+ file에 저장)
+
         print('\nStart : load from DB')
+        start_time = time.time()
 
         # 원격 접속을 위한 ssh tunnel
         server = SSHTunnelForwarder(
@@ -120,17 +122,17 @@ class Searchpert_w2v:
             sentences = self.mecab_processing(sentences)  # mecab 형태소분석
 
             self.term_sentences.append(sentences)
-            print("Finish : load sentences from DB - {}".format(i))
 
-        server.stop()  # ssh tunnel close
-
-        # 시간 단축을 위해 file에 저장
-        for i in range(TERM_COUNT):
-            with open(DATA_DIR + 'center_data_' + str(i) + '.txt', 'w') as file:
+            # 시간 단축을 위해 file에 저장
+            with open(DATA_DIR + 'center_data_{}.txt'.format(i), 'w') as file:
                 for sentence in self.term_sentences[i]:
                     file.write(' '.join(sentence) + '\n')
 
-        print("Finish : write in file")
+            finish_time = int(time.time() - start_time)
+            print('Finish : load sentences from DB - {}'.format(i), end='\t')
+            print('{}:{}'.format(finish_time // 60, finish_time % 60))
+
+        server.stop()  # ssh tunnel close
 
 
     def load_sentences_from_file(self):
@@ -149,9 +151,9 @@ class Searchpert_w2v:
 
                 self.term_sentences.append(sentences)
 
-        finish_time = int(time.time() - start_time)
-        print("{}:{}".format(finish_time // 60, finish_time % 60))
-        print("Finish : load sentences from file")
+            finish_time = int(time.time() - start_time)
+            print("Finish : load sentences from file - {}".format(i), end='\t')
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
     def remove_irregular(self, sentences):
@@ -197,10 +199,10 @@ class Searchpert_w2v:
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
-            print("Finish : load word2vec model - {}".format(i))
+            finish_time = int(time.time() - start_time)
+            print("Finish : load word2vec model - {}".format(i), end='\t')
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
 
-        finish_time = int(time.time() - start_time)
-        print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
     def build_model(self):
@@ -221,9 +223,6 @@ class Searchpert_w2v:
 
             print("Finish : build word2vec model - {}".format(i))
 
-        finish_time = int(time.time() - start_time)
-        print("{}:{}".format(finish_time // 60, finish_time % 60))
-
 
     def vector_to_tsv(self):
         start_time = time.time()
@@ -234,8 +233,8 @@ class Searchpert_w2v:
             tensor_tsv_name = DATA_DIR + 'wv_' + str(i)
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
 
-            print("Finish : w2v to tensor - {}".format(i))
             finish_time = int(time.time() - start_time)
+            print("Finish : w2v to tensor - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
