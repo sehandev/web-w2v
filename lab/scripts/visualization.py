@@ -8,9 +8,9 @@ import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 
 
-def visualize(model, index):
+def visualize(model, data_dir, index):
     meta_file = 'tf_metatdata_' + str(index) + '.tsv'
-    output_path = '/searchpert-w2v/lab/scripts/data/visual_' + str(index)
+    output_path = data_dir + 'visual_' + str(index)
 
     pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
     placeholder = np.zeros((len(model.wv.index2word), model.vector_size))
@@ -18,7 +18,6 @@ def visualize(model, index):
     with open(os.path.join(output_path, meta_file), 'wb') as file_metadata:
         for i, word in enumerate(model.wv.index2word):
             placeholder[i] = model[word]
-            # temporary solution for https://github.com/tensorflow/tensorflow/issues/9094
             if word == '':
                 print("Emply Line, should replecaed by any thing else, or will cause a bug of tensorboard")
                 file_metadata.write("{0}".format('<Empty Line>').encode('utf-8') + b'\n')
