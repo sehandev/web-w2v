@@ -214,7 +214,9 @@ class Searchpert_w2v:
         for i in range(TERM_COUNT):
             tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
-            model = Word2Vec(sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=30, compute_loss=True, callbacks=[callback()])
+
+            # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
+            model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=30, compute_loss=True, callbacks=[callback()])
             model.save(DATA_DIR + 'wv_' + str(i) + '.model')  # model 저장
             model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             self.term_models.append(model)
