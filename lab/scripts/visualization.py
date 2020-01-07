@@ -7,6 +7,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 
 def visualize(model, data_dir, index):
     meta_file = 'tf_metatdata_' + str(index) + '.tsv'
@@ -25,7 +27,7 @@ def visualize(model, data_dir, index):
                 file_metadata.write("{0}".format(word).encode('utf-8') + b'\n')
 
     # define the model without training
-    sess = tf.InteractiveSession()
+    sess = tf.compat.v1.InteractiveSession()
 
     embedding = tf.Variable(placeholder, trainable=False, name='w2x_metadata')
     tf.compat.v1.global_variables_initializer().run()
@@ -43,3 +45,5 @@ def visualize(model, data_dir, index):
     projector.visualize_embeddings(writer, config)
     saver.save(sess, os.path.join(output_path, 'w2x_metadata.ckpt'))
     # print('Run `tensorboard --logdir={0}` to run visualize result on tensorboard'.format(output_path))
+
+    sess.close()

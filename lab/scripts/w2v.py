@@ -10,7 +10,7 @@ from gensim.scripts.word2vec2tensor import word2vec2tensor
 from gensim import utils
 from konlpy.tag import Mecab
 
-from visualization import visualize
+from .visualization import visualize
 
 import datetime
 import random
@@ -64,9 +64,7 @@ class Searchpert_w2v:
         # self.load_sentences_from_file()
         # self.build_model()
 
-        # self.load_model()
-
-        self.vector_to_tsv()
+        self.load_model()
 
 
     def load_sentences_from_db(self):
@@ -201,6 +199,7 @@ class Searchpert_w2v:
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
+            self.vector_to_tsv()
             visualize(model, DATA_DIR, i)  # 시각화
 
             finish_time = int(time.time() - start_time)
@@ -227,6 +226,7 @@ class Searchpert_w2v:
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
+            self.vector_to_tsv()
             visualize(model, DATA_DIR, i)  # 시각화
 
             print("Finish : build word2vec model - {}".format(i))
