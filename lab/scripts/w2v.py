@@ -50,7 +50,6 @@ class callback(CallbackAny2Vec):
         self.epoch += 1
 
 
-
 class Searchpert_w2v:
     def __init__(self):
         self.TERM_COUNT = TERM_COUNT
@@ -207,7 +206,6 @@ class Searchpert_w2v:
             print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
-
     def build_model(self):
         # word2vec 학습하기 
 
@@ -229,7 +227,10 @@ class Searchpert_w2v:
             self.vector_to_tsv()
             visualize(model, DATA_DIR, i)  # 시각화
 
-            print("Finish : build word2vec model - {}".format(i))
+
+            finish_time = int(time.time() - start_time)
+            print("Finish : build word2vec model - {}".format(i), end='\t')
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
     def vector_to_tsv(self):
