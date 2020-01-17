@@ -106,15 +106,19 @@ class Searchpert_w2v:
 
             # 기간에 해당하는 data만 읽기 (+ 테스트를 위해 limit 추가)
             cursor = collection.find(
-                {"date": {'$gte': from_date[i], '$lt': to_date[i]}}
+                {
+                    'date': {'$gte': from_date[i], '$lt': to_date[i]},
+                    'tag': {'$or' : ['감사원', '경찰청', '고용노동부', '공정거래위원회', '과학기술정보통신부', '관세청', '교육부', '국가보훈처', '국가인권위원회', '국가정보원 국무조정실', '국민권익위원회', '국방부', '국세청', '국토교통부', '금융위원회', '기상청', '기획재정부', '농림축산식품부', '농촌진흥청', '대검찰청', '대통령경호처', '전자관보', '문화재청', '문화체육관광부', '방송통신위원회', '방위사업청', '법무부', '법제처', '병무청', '보건복지부', '산림청', '산업통상자원부', '새만금개발청', '식품의약품안전처', '여성가족부', '외교부', '원자력안전위원회', '인사혁신처', '정부24', '정책브리핑', '조달청', '중소벤처기업부', '통계청', '통일부', '특허청', '해양수산부', '행정안전부', '행정중심복합도시건설청', '환경부']},
+                }
                 # ,limit=QUERY_LIMIT
                 )
 
             # DB에서 cursor로 data 읽기
             sentences = []
             for document in cursor:
-                if document['content'].strip():
-                    sentences.append(document['content'])
+                tmp = document['content'].strip()  # 내용만 읽어오기
+                if tmp:  # 내용이 있다면
+                    sentences.append(tmp)
             
             # 전처리 (preprocessing)
             sentences = self.remove_irregular(sentences)  # 한글, 영어만 남기기
