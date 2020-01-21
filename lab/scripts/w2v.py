@@ -73,8 +73,8 @@ class Searchpert_w2v:
         self.term_name = ['문재인', '박근혜', '이명박', '노무현']
 
         # self.load_sentences_from_db()
-        self.build_model()
-        # self.load_model()
+        # self.build_model()
+        self.load_model()
 
     def load_sentences_from_db(self):
         # DB로부터 data 받아와서 전처리 거치기 (+ file에 저장)
@@ -182,7 +182,7 @@ class Searchpert_w2v:
         # word2vec load하기 
 
         start_time = time.time()
-        print('\nStart : word2vec model')
+        print('\nStart : load word2vec model')
 
         for i in range(self.term_count):
             model = Word2Vec.load(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')
@@ -198,7 +198,7 @@ class Searchpert_w2v:
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print('Finish : load word2vec model - {}'.format(self.term_name[term_index]), end='\t')
+            print('Finish : load word2vec model - {}'.format(self.term_name[i]), end='\t')
             print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
 
     def build_model(self):
@@ -210,7 +210,7 @@ class Searchpert_w2v:
             tmp_sentences = self.load_sentences_from_file(i)
             # random.shuffle(tmp_sentences)  # randomly shuffled list
 
-            print('\nStart : word2vec model - {}'.format(self.term_name[term_index]))
+            print('\nStart : word2vec model - {}'.format(self.term_name[i]))
 
             # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
             model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=3, min_count=10, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
@@ -220,7 +220,7 @@ class Searchpert_w2v:
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print('Finish : build word2vec model - {}'.format(self.term_name[term_index]), end='\t')
+            print('Finish : build word2vec model - {}'.format(self.term_name[i]), end='\t')
             print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
 
         self.vector_to_tsv()
@@ -229,7 +229,7 @@ class Searchpert_w2v:
             visualize(model, DATA_DIR, self.term_name[i])  # 시각화
 
             finish_time = int(time.time() - start_time)
-            print('Finish : visualization - {}'.format(self.term_name[term_index]), end='\t')
+            print('Finish : visualization - {}'.format(self.term_name[i]), end='\t')
             print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
 
     def vector_to_tsv(self):
@@ -242,7 +242,7 @@ class Searchpert_w2v:
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
 
             finish_time = int(time.time() - start_time)
-            print('Finish : w2v to tensor - {}'.format(self.term_name[term_index]), end='\t')
+            print('Finish : w2v to tensor - {}'.format(self.term_name[i]), end='\t')
             print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
 
     def most_similar(self, search_word, term_name, topn=10):
@@ -265,4 +265,4 @@ class Searchpert_w2v:
             return -1, 0, 0
 
 
-searchpert_w2v = Searchpert_w2v(4)  # instance create
+searchpert_w2v = Searchpert_w2v(2)  # instance create
