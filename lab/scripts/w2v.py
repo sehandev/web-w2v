@@ -42,7 +42,7 @@ class callback(CallbackAny2Vec):
 
         finish_time = int(time.time() - self.start_time)
         print('Loss after epoch {}: {}'.format(self.epoch, loss), end='\t')
-        print("{}:{}".format(finish_time // 60, finish_time % 60))
+        print('{}:{}'.format(finish_time // 60, finish_time % 60))
 
         self.epoch += 1
 
@@ -73,7 +73,6 @@ class Searchpert_w2v:
         self.term_name = ['문재인', '박근혜', '이명박', '노무현']
 
         # self.load_sentences_from_db()
-        self.load_sentences_from_file()
         self.build_model()
         # self.load_model()
 
@@ -134,25 +133,25 @@ class Searchpert_w2v:
 
         server.stop()  # ssh tunnel close
 
-    def load_sentences_from_file(self):
+    def load_sentences_from_file(self, term_index):
         # file에서 data 받기
         
-        print('\nStart : load from file')
+        print('\nStart : load from file - {}'.format(self.term_name[term_index]))
         start_time = time.time()
-        for i in range(self.term_count):
-            with open(DATA_DIR + 'train/' + 'sehan_data_test_' + self.term_name[i] + '.txt', 'r', errors='ignore') as infile:
-                sentences = []
-                for cnt, line in enumerate(infile):
-                    sentences.append(line.split())
-                    if cnt % 200000 == 0:
-                        print(cnt)
-                print('Total count : {}\n'.format(cnt))
 
-                self.term_sentences.append(sentences)
+        with open(DATA_DIR + 'train/' + 'sehan_data_test_' + self.term_name[term_index] + '.txt', 'r', errors='ignore') as infile:
+            sentences = []
+            for cnt, line in enumerate(infile):
+                sentences.append(line.split())
+                if cnt % 200000 == 0:
+                    print(cnt)
+            print('Total count : {}\n'.format(cnt))
 
-            finish_time = int(time.time() - start_time)
-            print("Finish : load sentences from file - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
+        finish_time = int(time.time() - start_time)
+        print('Finish : load sentences from file - {}'.format(self.term_name[term_index]), end='\t')
+        print('{}:{}'.format(finish_time // 60, finish_time % 60))
+
+        return sentences
 
     def remove_irregular(self, sentences):
         # 한글, 영어만 남기기
@@ -176,7 +175,7 @@ class Searchpert_w2v:
 
         return after_process
 
-    def load_model(self, ):
+    def load_model(self):
         # word2vec load하기 
 
         start_time = time.time()
@@ -196,8 +195,8 @@ class Searchpert_w2v:
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print("Finish : load word2vec model - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
+            print('Finish : load word2vec model - {}'.format(i), end='\t')
+            print('{}:{}'.format(finish_time // 60, finish_time % 60))
 
     def build_model(self):
         # word2vec 학습하기 
@@ -205,8 +204,8 @@ class Searchpert_w2v:
         start_time = time.time()
         print('\nStart : word2vec model')
 
-        for i in range(1, self.term_count):
-            tmp_sentences = self.load_sentences_from_file()
+        for i in range(self.term_count):
+            tmp_sentences = self.load_sentences_from_file(i)
             random.shuffle(tmp_sentences)  # randomly shuffled list
 
             # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
@@ -217,8 +216,8 @@ class Searchpert_w2v:
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print("Finish : build word2vec model - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
+            print('Finish : build word2vec model - {}'.format(i), end='\t')
+            print('{}:{}'.format(finish_time // 60, finish_time % 60))
 
         self.vector_to_tsv()
 
@@ -226,8 +225,8 @@ class Searchpert_w2v:
             visualize(model, DATA_DIR, self.term_name[i])  # 시각화
 
             finish_time = int(time.time() - start_time)
-            print("Finish : visualization - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
+            print('Finish : visualization - {}'.format(i), end='\t')
+            print('{}:{}'.format(finish_time // 60, finish_time % 60))
 
     def vector_to_tsv(self):
         start_time = time.time()
@@ -239,8 +238,8 @@ class Searchpert_w2v:
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
 
             finish_time = int(time.time() - start_time)
-            print("Finish : w2v to tensor - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
+            print('Finish : w2v to tensor - {}'.format(i), end='\t')
+            print('{}:{}'.format(finish_time // 60, finish_time % 60))
 
     def most_similar(self, search_word, term_name, topn=10):
         # search_word와 가장 비슷한 단어 topn개
