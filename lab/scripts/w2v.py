@@ -53,8 +53,8 @@ class Searchpert_w2v:
 
         self.mecab = Mecab()
         self.term_sentences = []  # 기간에 따른 data list
-        self.term_models = []  # 기간에 따른 mecab model list
-        self.term_words = []  # 기간에 따른 word list
+        self.term_models = {}  # 기간에 따른 mecab model list
+        self.term_words = {} # 기간에 따른 word list
 
         # 기준에 따라 나눈 날짜 (16대 노무현, 17대 이명박, 18대 박근혜, 19대 문재인)
         self.from_date = [
@@ -76,7 +76,6 @@ class Searchpert_w2v:
         self.load_sentences_from_file()
         self.build_model()
         # self.load_model()
-
 
     def load_sentences_from_db(self):
         # DB로부터 data 받아와서 전처리 거치기 (+ file에 저장)
@@ -117,7 +116,7 @@ class Searchpert_w2v:
                 tmp = document['content'].strip()  # 내용만 읽어오기
                 if tmp:  # 내용이 있다면
                     sentences.append(tmp)
-            
+
             # 전처리 (preprocessing)
             sentences = self.remove_irregular(sentences)  # 한글, 영어만 남기기
             sentences = self.mecab_processing(sentences)  # mecab 형태소분석
@@ -135,7 +134,6 @@ class Searchpert_w2v:
 
         server.stop()  # ssh tunnel close
 
-
     def load_sentences_from_file(self):
         # file에서 data 받기
         
@@ -146,15 +144,15 @@ class Searchpert_w2v:
                 sentences = []
                 for cnt, line in enumerate(infile):
                     sentences.append(line.split())
-                    if cnt % 100000 == 0:
+                    if cnt % 200000 == 0:
                         print(cnt)
+                print('Total count : {}\n'.format(cnt))
 
                 self.term_sentences.append(sentences)
 
             finish_time = int(time.time() - start_time)
             print("Finish : load sentences from file - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
-
 
     def remove_irregular(self, sentences):
         # 한글, 영어만 남기기
@@ -167,7 +165,6 @@ class Searchpert_w2v:
             new_sentences.append(' '.join(regular_words))
 
         return new_sentences
-            
 
     def mecab_processing(self, sentences):
         # Mecab을 이용해서 문장을 형태소로 분석
@@ -179,8 +176,7 @@ class Searchpert_w2v:
 
         return after_process
 
-
-    def load_model(self):
+    def load_model(self, ):
         # word2vec load하기 
 
         start_time = time.time()
@@ -188,12 +184,13 @@ class Searchpert_w2v:
 
         for i in range(self.term_count):
             model = Word2Vec.load(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')
-            self.term_models.append(model)
+            self.term_models[self.term_name[i]] = model  # loaded model 추가
             
+            # model에 학습된 단어 추가
             w2c = dict()
             for item in model.wv.vocab:
                 w2c[item]=model.wv.vocab[item].count
-            self.term_words.append(dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True)))
+            self.term_words[self.term_name[i]] = dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True))
             
             model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
@@ -201,15 +198,6 @@ class Searchpert_w2v:
             finish_time = int(time.time() - start_time)
             print("Finish : load word2vec model - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
-
-        self.vector_to_tsv()
-        for i in range(self.term_count):
-            visualize(model, DATA_DIR, i)  # 시각화
-
-            finish_time = int(time.time() - start_time)
-            print("Finish : load word2vec model - {}".format(i), end='\t')
-            print("{}:{}".format(finish_time // 60, finish_time % 60))
-
 
     def build_model(self):
         # word2vec 학습하기 
@@ -218,14 +206,13 @@ class Searchpert_w2v:
         print('\nStart : word2vec model')
 
         for i in range(1, self.term_count):
-            tmp_sentences = self.term_sentences[i]
+            tmp_sentences = self.load_sentences_from_file()
             random.shuffle(tmp_sentences)  # randomly shuffled list
 
             # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
             model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
             model.save(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')  # model 저장
             model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
-            self.term_models.append(model)
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
@@ -234,13 +221,13 @@ class Searchpert_w2v:
             print("{}:{}".format(finish_time // 60, finish_time % 60))
 
         self.vector_to_tsv()
+
         for i in range(self.term_count):
-            visualize(model, DATA_DIR, i)  # 시각화
+            visualize(model, DATA_DIR, self.term_name[i])  # 시각화
 
             finish_time = int(time.time() - start_time)
-            print("Finish : load word2vec model - {}".format(i), end='\t')
+            print("Finish : visualization - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
-
 
     def vector_to_tsv(self):
         start_time = time.time()
@@ -255,8 +242,7 @@ class Searchpert_w2v:
             print("Finish : w2v to tensor - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
 
-
-    def most_similar(self, search_word, term=1, topn=10):
+    def most_similar(self, search_word, term_name, topn=10):
         # search_word와 가장 비슷한 단어 topn개
 
         if search_word == '':
@@ -265,19 +251,15 @@ class Searchpert_w2v:
 
         try:
             # 입력한 단어가 vector로 있으면
-            most_similar_word = self.term_models[term].wv.most_similar(search_word, topn=topn)  # 가장 비슷한 단어
+            most_similar_word = self.term_models[term_name].wv.most_similar(search_word, topn=topn)  # 가장 비슷한 단어
 
             similar_count = []
             for similar_word, _ in most_similar_word:
-                similar_count.append(self.term_words[term][similar_word])
-            return most_similar_word, similar_count, self.term_words[term][search_word]
+                similar_count.append(self.term_words[term_name][similar_word])
+            return most_similar_word, similar_count, self.term_words[term_name][search_word]
         except:
             # 입력한 단어가 없으면
             return -1, 0, 0
 
 
-searchpert_w2v = Searchpert_w2v(2)  # instance create
-
-# if __name__ == '__main__':
-#     # Test
-#     print(searchpert_w2v.most_similar('조례', 1))  # 테스트
+searchpert_w2v = Searchpert_w2v(4)  # instance create
