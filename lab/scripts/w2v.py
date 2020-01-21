@@ -194,7 +194,7 @@ class Searchpert_w2v:
                 w2c[item]=model.wv.vocab[item].count
             self.term_words[self.term_name[i]] = dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True))
             
-            model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
+            # model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
@@ -265,4 +265,4 @@ class Searchpert_w2v:
             return -1, 0, 0
 
 
-searchpert_w2v = Searchpert_w2v(2)  # instance create
+searchpert_w2v = Searchpert_w2v(4)  # instance create
