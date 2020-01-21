@@ -2,8 +2,11 @@
 
 from sshtunnel import SSHTunnelForwarder
 import pymongo
+import datetime
+import random
+import time
+import re
 
-from gensim.test.utils import common_texts, get_tmpfile
 from gensim.models.callbacks import CallbackAny2Vec
 from gensim.models.word2vec import Word2Vec
 from gensim.scripts.word2vec2tensor import word2vec2tensor
@@ -12,15 +15,9 @@ from konlpy.tag import Mecab
 
 from .visualization import visualize
 
-import datetime
-import random
-import time
-import re
-
 
 # static variables
 DATA_DIR = '/searchpert-w2v/lab/scripts/data/'
-TERM_COUNT = 2
 
 # 보안을 위해 DB서버 정보를 따로 보관
 with open(DATA_DIR + 'connection.txt', 'r') as file:
@@ -29,8 +26,8 @@ MONGO_HOST = (connection_data[0], int(connection_data[1]))  # host server addr, 
 MONGO_USER = connection_data[2]  # ssh username
 MONGO_PASS = connection_data[3]  # ssh password
 MONGO_DB = 'spert_crawler'
-MONGO_COLLECTION = 'final_normal'
-QUERY_LIMIT = 200000
+MONGO_COLLECTION = 'final_nogitrmal'
+QUERY_LIMIT = 20
 
 
 class callback(CallbackAny2Vec):
@@ -51,19 +48,34 @@ class callback(CallbackAny2Vec):
 
 
 class Searchpert_w2v:
-    def __init__(self):
-        self.TERM_COUNT = TERM_COUNT
+    def __init__(self, term_count):
+        self.term_count = term_count
 
         self.mecab = Mecab()
         self.term_sentences = []  # 기간에 따른 data list
         self.term_models = []  # 기간에 따른 mecab model list
         self.term_words = []  # 기간에 따른 word list
 
-        # self.load_sentences_from_db()
-        # self.load_sentences_from_file()
-        # self.build_model()
+        # 기준에 따라 나눈 날짜 (16대 노무현, 17대 이명박, 18대 박근혜, 19대 문재인)
+        self.from_date = [
+            datetime.datetime(2017, 5, 1),
+            datetime.datetime(2013, 3, 1),
+            datetime.datetime(2008, 3, 1),
+            datetime.datetime(2003, 3, 1)
+            ]
+        self.to_date = [
+            datetime.datetime(2019, 10, 31, 23, 59, 59, 000000),
+            datetime.datetime(2015, 8, 31, 23, 59, 59, 000000),
+            datetime.datetime(2010, 8, 31, 23, 59, 59, 000000),
+            datetime.datetime(2005, 8, 31, 23, 59, 59, 000000)
+            ]
 
-        self.load_model()
+        self.term_name = ['문재인', '박근혜', '이명박', '노무현']
+
+        # self.load_sentences_from_db()
+        self.load_sentences_from_file()
+        self.build_model()
+        # self.load_model()
 
 
     def load_sentences_from_db(self):
@@ -87,27 +99,13 @@ class Searchpert_w2v:
         client = pymongo.MongoClient('127.0.0.1', server.local_bind_port)  # local_bind_port : sshTunnel을 통해 원격 mongoDB에 접속된 port
         db = client[MONGO_DB]
         collection = db[MONGO_COLLECTION]
-
-        # 기준에 따라 나눈 날짜 (16대 노무현, 17대 이명박, 18대 박근혜, 19대 문재인)
-        from_date = [
-            datetime.datetime(2003, 3, 1),
-            datetime.datetime(2008, 3, 1),
-            datetime.datetime(2013, 3, 1),
-            datetime.datetime(2017, 5, 1)
-            ]
-        to_date = [
-            datetime.datetime(2005, 8, 31, 23, 59, 59, 000000),
-            datetime.datetime(2010, 8, 31, 23, 59, 59, 000000),
-            datetime.datetime(2015, 8, 31, 23, 59, 59, 000000),
-            datetime.datetime(2019, 10, 31, 23, 59, 59, 000000)
-            ]
         
-        for i in range(TERM_COUNT):
+        for i in range(self.term_count):
 
             # 기간에 해당하는 data만 읽기 (+ 테스트를 위해 limit 추가)
             cursor = collection.find(
                 {
-                    'date': {'$gte': from_date[i], '$lt': to_date[i]},
+                    'date': {'$gte': self.from_date[i], '$lt': self.to_date[i]},
                     'tag': {'$or' : ['감사원', '경찰청', '고용노동부', '공정거래위원회', '과학기술정보통신부', '관세청', '교육부', '국가보훈처', '국가인권위원회', '국가정보원 국무조정실', '국민권익위원회', '국방부', '국세청', '국토교통부', '금융위원회', '기상청', '기획재정부', '농림축산식품부', '농촌진흥청', '대검찰청', '대통령경호처', '전자관보', '문화재청', '문화체육관광부', '방송통신위원회', '방위사업청', '법무부', '법제처', '병무청', '보건복지부', '산림청', '산업통상자원부', '새만금개발청', '식품의약품안전처', '여성가족부', '외교부', '원자력안전위원회', '인사혁신처', '정부24', '정책브리핑', '조달청', '중소벤처기업부', '통계청', '통일부', '특허청', '해양수산부', '행정안전부', '행정중심복합도시건설청', '환경부']},
                 }
                 # ,limit=QUERY_LIMIT
@@ -143,9 +141,8 @@ class Searchpert_w2v:
         
         print('\nStart : load from file')
         start_time = time.time()
-        for i in range(TERM_COUNT):
-            with open(DATA_DIR + 'center_data_' + str(i) + '.txt', 'r') as infile:
-
+        for i in range(self.term_count):
+            with open(DATA_DIR + 'train/' + 'sehan_data_test_' + self.term_name[i] + '.txt', 'r', errors='ignore') as infile:
                 sentences = []
                 for cnt, line in enumerate(infile):
                     sentences.append(line.split())
@@ -189,8 +186,8 @@ class Searchpert_w2v:
         start_time = time.time()
         print('\nStart : word2vec model')
 
-        for i in range(TERM_COUNT):
-            model = Word2Vec.load(DATA_DIR + 'wv_' + str(i) + '.model')
+        for i in range(self.term_count):
+            model = Word2Vec.load(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')
             self.term_models.append(model)
             
             w2c = dict()
@@ -198,11 +195,15 @@ class Searchpert_w2v:
                 w2c[item]=model.wv.vocab[item].count
             self.term_words.append(dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True)))
             
-            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.bin', binary=True)  # word2vec2tensor를 위한 저장
-
+            model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
-            self.vector_to_tsv()
+            finish_time = int(time.time() - start_time)
+            print("Finish : load word2vec model - {}".format(i), end='\t')
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
+
+        self.vector_to_tsv()
+        for i in range(self.term_count):
             visualize(model, DATA_DIR, i)  # 시각화
 
             finish_time = int(time.time() - start_time)
@@ -216,24 +217,28 @@ class Searchpert_w2v:
         start_time = time.time()
         print('\nStart : word2vec model')
 
-        for i in range(TERM_COUNT):
+        for i in range(1, self.term_count):
             tmp_sentences = self.term_sentences[i]
             random.shuffle(tmp_sentences)  # randomly shuffled list
 
             # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
-            model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=30, compute_loss=True, callbacks=[callback()])
-            model.save(DATA_DIR + 'wv_' + str(i) + '.model')  # model 저장
-            model.wv.save_word2vec_format(DATA_DIR + 'wv_format_' + str(i) + '.bin', binary=True)  # word2vec2tensor를 위한 저장
+            model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=5, min_count=10, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
+            model.save(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')  # model 저장
+            model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             self.term_models.append(model)
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
-            self.vector_to_tsv()
-            visualize(model, DATA_DIR, i)  # 시각화
-
-
             finish_time = int(time.time() - start_time)
             print("Finish : build word2vec model - {}".format(i), end='\t')
+            print("{}:{}".format(finish_time // 60, finish_time % 60))
+
+        self.vector_to_tsv()
+        for i in range(self.term_count):
+            visualize(model, DATA_DIR, i)  # 시각화
+
+            finish_time = int(time.time() - start_time)
+            print("Finish : load word2vec model - {}".format(i), end='\t')
             print("{}:{}".format(finish_time // 60, finish_time % 60))
 
 
@@ -241,9 +246,9 @@ class Searchpert_w2v:
         start_time = time.time()
         print('\nStart : w2v to tensor')
 
-        for i in range(TERM_COUNT):
-            model_path = DATA_DIR + 'wv_format_' + str(i) + '.bin'
-            tensor_tsv_name = DATA_DIR + 'wv_' + str(i)
+        for i in range(self.term_count):
+            model_path = DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin'
+            tensor_tsv_name = DATA_DIR + 'tsv/' + 'wv_' + self.term_name[i]
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
 
             finish_time = int(time.time() - start_time)
@@ -271,7 +276,7 @@ class Searchpert_w2v:
             return -1, 0, 0
 
 
-searchpert_w2v = Searchpert_w2v()  # instance create
+searchpert_w2v = Searchpert_w2v(2)  # instance create
 
 # if __name__ == '__main__':
 #     # Test

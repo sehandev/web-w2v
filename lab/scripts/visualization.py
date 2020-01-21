@@ -10,9 +10,9 @@ from tensorflow.contrib.tensorboard.plugins import projector
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
-def visualize(model, data_dir, index):
-    meta_file = 'tf_metatdata_' + str(index) + '.tsv'
-    output_path = data_dir + 'visual_' + str(index)
+def visualize(model, data_dir, term_name):
+    output_path = data_dir + 'visual/' + 'visual_' + term_name
+    meta_file = 'tf_metadata_' + term_name + '.tsv'
 
     pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
     placeholder = np.zeros((len(model.wv.index2word), model.vector_size))
