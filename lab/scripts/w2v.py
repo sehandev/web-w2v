@@ -41,8 +41,8 @@ class callback(CallbackAny2Vec):
         loss = model.get_latest_training_loss()
 
         finish_time = int(time.time() - self.start_time)
-        print('Loss after epoch {}: {}'.format(self.epoch, loss), end='\t')
-        print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+        print(f'Loss after epoch {self.epoch}: {loss}', end='\t')
+        print(f'{finish_time // 60}:{finish_time % 60}\n')
 
         self.epoch += 1
 
@@ -124,23 +124,23 @@ class Searchpert_w2v:
             self.term_sentences.append(sentences)
 
             # 시간 단축을 위해 file에 저장
-            with open(DATA_DIR + 'center_data_{}.txt'.format(self.term_name[term_index]), 'w') as file:
+            with open(DATA_DIR + f'center_data_{self.term_name[term_index]}.txt', 'w') as file:
                 for sentence in self.term_sentences[i]:
                     file.write(' '.join(sentence) + '\n')
 
             finish_time = int(time.time() - start_time)
-            print('Finish : load sentences from DB - {}'.format(self.term_name[term_index]), end='\t')
-            print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+            print(f'Finish : load sentences from DB - {self.term_name[term_index]}', end='\t')
+            print(f'{finish_time // 60}:{finish_time % 60}\n')
 
         server.stop()  # ssh tunnel close
 
     def load_sentences_from_file(self, term_index):
         # file에서 data 받기
         
-        print('\nStart : load from file - {}'.format(self.term_name[term_index]))
+        print(f'\nStart : load from file - {self.term_name[term_index]}')
         start_time = time.time()
 
-        with open(DATA_DIR + 'train/' + 'sehan_data_test_' + self.term_name[term_index] + '.txt', 'r', errors='ignore') as infile:
+        with open(DATA_DIR + f'train/sehan_data_test_{self.term_name[term_index]}.txt', 'r', errors='ignore') as infile:
             sentences = []
             for cnt, line in enumerate(infile):
                 sentences.append(line.split())
@@ -149,11 +149,11 @@ class Searchpert_w2v:
                 if cnt >= 1000000:
                     break
 
-            print('Total count : {}\n'.format(cnt))
+            print(f'Total count : {cnt}\n')
 
         finish_time = int(time.time() - start_time)
-        print('Finish : load sentences from file - {}'.format(self.term_name[term_index]), end='\t')
-        print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+        print(f'Finish : load sentences from file - {self.term_name[term_index]}', end='\t')
+        print(f'{finish_time // 60}:{finish_time % 60}\n')
 
         return sentences
 
@@ -186,7 +186,7 @@ class Searchpert_w2v:
         print('\nStart : load word2vec model')
 
         for i in range(self.term_count):
-            model = Word2Vec.load(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')
+            model = Word2Vec.load(DATA_DIR + f'model/wv_{self.term_name[i]}.model')
             self.term_models[self.term_name[i]] = model  # loaded model 추가
             
             # model에 학습된 단어 추가
@@ -199,8 +199,8 @@ class Searchpert_w2v:
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print('Finish : load word2vec model - {}'.format(self.term_name[i]), end='\t')
-            print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+            print(f'Finish : load word2vec model - {self.term_name[i]}', end='\t')
+            print(f'{finish_time // 60}:{finish_time % 60}\n')
 
     def build_model(self):
         # word2vec 학습하기 
@@ -211,18 +211,18 @@ class Searchpert_w2v:
             tmp_sentences = self.load_sentences_from_file(i)
             # random.shuffle(tmp_sentences)  # randomly shuffled list
 
-            print('\nStart : word2vec model - {}'.format(self.term_name[i]))
+            print('\nStart : word2vec model - {self.term_name[i]}')
 
             # word2vec : sg(CBOW, Skip-gram), sentences(학습할 문장), size(vector 차원 크기), window(주변 단어), min_count(최소 단어 개수)
             model = Word2Vec(sg=1, sentences=tmp_sentences, size=256, window=3, min_count=10, workers=40, iter=10, compute_loss=True, callbacks=[callback()])
-            model.save(DATA_DIR + 'model/' + 'wv_' + self.term_name[i] + '.model')  # model 저장
-            model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
+            model.save(DATA_DIR + f'model/wv_{self.term_name[i]}.model')  # model 저장
+            model.wv.save_word2vec_format(DATA_DIR + f'tf_vector/wv_format_{self.term_name[i]}.bin', binary=True)  # word2vec2tensor를 위한 저장
 
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
 
             finish_time = int(time.time() - start_time)
-            print('Finish : build word2vec model - {}'.format(self.term_name[i]), end='\t')
-            print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+            print(f'Finish : build word2vec model - {self.term_name[i]}', end='\t')
+            print(f'{finish_time // 60}:{finish_time % 60}\n')
 
         self.vector_to_tsv()
 
@@ -230,21 +230,21 @@ class Searchpert_w2v:
             visualize(model, DATA_DIR, self.term_name[i])  # 시각화
 
             finish_time = int(time.time() - start_time)
-            print('Finish : visualization - {}'.format(self.term_name[i]), end='\t')
-            print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+            print(f'Finish : visualization - {self.term_name[i]}', end='\t')
+            print(f'{finish_time // 60}:{finish_time % 60}\n')
 
     def vector_to_tsv(self):
         start_time = time.time()
         print('\nStart : w2v to tensor')
 
         for i in range(self.term_count):
-            model_path = DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin'
-            tensor_tsv_name = DATA_DIR + 'tsv/' + 'wv_' + self.term_name[i]
+            model_path = DATA_DIR + f'tf_vector/wv_format_{self.term_name[i]}.bin'
+            tensor_tsv_name = DATA_DIR + f'tsv/wv_{self.term_name[i]}'
             word2vec2tensor(model_path, tensor_tsv_name, binary=True)
 
             finish_time = int(time.time() - start_time)
-            print('Finish : w2v to tensor - {}'.format(self.term_name[i]), end='\t')
-            print('{}:{}\n'.format(finish_time // 60, finish_time % 60))
+            print(f'Finish : w2v to tensor - {self.term_name[i]}', end='\t')
+            print(f'{finish_time // 60}:{finish_time % 60}\n')
 
     def most_similar(self, search_word, term_name, topn=10):
         # search_word와 가장 비슷한 단어 topn개
