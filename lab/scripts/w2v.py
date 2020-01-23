@@ -19,15 +19,15 @@ from .visualization import visualize
 # static variables
 DATA_DIR = '/searchpert-w2v/lab/scripts/data/'
 
-# 보안을 위해 DB서버 정보를 따로 보관
-with open(DATA_DIR + 'connection.txt', 'r') as file:
-    connection_data = file.read().split()
-MONGO_HOST = (connection_data[0], int(connection_data[1]))  # host server addr, port
-MONGO_USER = connection_data[2]  # ssh username
-MONGO_PASS = connection_data[3]  # ssh password
-MONGO_DB = 'spert_crawler'
-MONGO_COLLECTION = 'final_nogitrmal'
-QUERY_LIMIT = 20
+# 보안을 위해 DB서버 정보를 따로 보관 - 현재 사용 X
+# with open(DATA_DIR + 'connection.txt', 'r') as file:
+#     connection_data = file.read().split()
+# MONGO_HOST = (connection_data[0], int(connection_data[1]))  # host server addr, port
+# MONGO_USER = connection_data[2]  # ssh username
+# MONGO_PASS = connection_data[3]  # ssh password
+# MONGO_DB = 'spert_crawler'
+# MONGO_COLLECTION = 'final_nogitrmal'
+# QUERY_LIMIT = 20
 
 
 class callback(CallbackAny2Vec):
@@ -77,6 +77,7 @@ class Searchpert_w2v:
         self.load_model()
 
     def load_sentences_from_db(self):
+        # 현재 사용 X
         # DB로부터 data 받아와서 전처리 거치기 (+ file에 저장)
 
         print('\nStart : load from DB')
