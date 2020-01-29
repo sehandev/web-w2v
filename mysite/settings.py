@@ -26,7 +26,7 @@ SECRET_KEY = '_dor#3ff@k=#$d$r8d(ci9(tmuevl$#7b6^@#8+mo-86m7exz$'
 DEBUG = True
 # DEBUG = False
 
-ALLOWED_HOSTS = ['searchpertai.ddns.net', '220.85.83.64', '223.194.69.89']
+ALLOWED_HOSTS = ['searchpertai.ddns.net', '220.85.83.64', '223.194.69.89', 'sehandev.com']
 
 
 # Application definition
