@@ -20,10 +20,12 @@ def w2v_1(request):
             if similar_list == -1:
                 render_dict['error_message'][i] = '찾는 결과가 없습니다.'
             else:
-                render_dict['word_count_list'][i] = '단어 빈도수 : ' + str(word_count) + '개'
+                render_dict['word_count_list'][i] = f'단어 빈도수 : {word_count}개, {round(word_count / searchpert_w2v.term_counts[i], 3)}%'
                 render_dict['result_list'][i] = []
                 for j in range(len(similar_list)):
-                    render_dict['result_list'][i].append(similar_list[j][0] + ' : ' + str(round(similar_list[j][1] * 100, 4)) + ' (' + str(similar_word_count[j]) + '개)')
+                    cosine_similarity = round(similar_list[j][1] * 100, 2)
+                    count_ratio = round(similar_word_count[j] / searchpert_w2v.term_counts[i], 3)
+                    render_dict['result_list'][i].append(f'{similar_list[j][0]} : {cosine_similarity} ({similar_word_count[j]}개, {count_ratio}%)')
 
     return render(request, 'lab/w2v_1.html', {'keyword' : keyword, 'render_dict' : render_dict})
 
@@ -46,9 +48,11 @@ def w2v_2(request):
             if similar_list == -1:
                 render_dict['error_message'][i] = '찾는 결과가 없습니다.'
             else:
-                render_dict['word_count_list'][i] = '단어 빈도수 : ' + str(word_count) + '개'
+                render_dict['word_count_list'][i] = f'단어 빈도수 : {word_count}개, {round(word_count / searchpert_w2v.term_counts[i], 3)}%'
                 render_dict['result_list'][i] = []
                 for j in range(len(similar_list)):
-                    render_dict['result_list'][i].append(similar_list[j][0] + ' : ' + str(round(similar_list[j][1] * 100, 4)) + ' (' + str(similar_word_count[j]) + '개)')
+                    cosine_similarity = round(similar_list[j][1] * 100, 2)
+                    count_ratio = round(similar_word_count[j] / searchpert_w2v.term_counts[i], 3)
+                    render_dict['result_list'][i].append(f'{similar_list[j][0]} : {cosine_similarity} ({similar_word_count[j]}개, {count_ratio}%)')
 
     return render(request, 'lab/w2v_2.html', {'keyword' : keyword, 'render_dict' : render_dict})

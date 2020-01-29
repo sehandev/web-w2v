@@ -55,6 +55,7 @@ class Searchpert_w2v:
         self.term_sentences = []  # 기간에 따른 data list
         self.term_models = {}  # 기간에 따른 mecab model list
         self.term_words = {} # 기간에 따른 word list
+        self.term_counts = [] # 기간에 따른 전체 word 개수 list
 
         # 기준에 따라 나눈 날짜 (16대 노무현, 17대 이명박, 18대 박근혜, 19대 문재인)
         self.from_date = [
@@ -192,8 +193,9 @@ class Searchpert_w2v:
             # model에 학습된 단어 추가
             w2c = dict()
             for item in model.wv.vocab:
-                w2c[item]=model.wv.vocab[item].count
+                w2c[item] = model.wv.vocab[item].count
             self.term_words[self.term_name[i]] = dict(sorted(w2c.items(), key=lambda x: x[1],reverse=True))
+            self.term_counts.append(len(model.wv.vocab))
             
             # model.wv.save_word2vec_format(DATA_DIR + 'tf_vector/' + 'wv_format_' + self.term_name[i] + '.bin', binary=True)  # word2vec2tensor를 위한 저장
             model.init_sims(replace=True)  # word2vec의 불필요한 memory unload
